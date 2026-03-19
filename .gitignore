@@ -1,0 +1,5 @@
+venv
+conversations
+.venv
+data
+local_chroma_db
