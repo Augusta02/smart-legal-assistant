@@ -18,14 +18,14 @@ from rag_pipeline import setup_rag_system, MODEL, HISTORY_LENGTH
 
 st.set_page_config(page_title="Smart Legal Assistant", page_icon="⚖️")
 
-# ── Constants ──────────────────────────────────────────────────────────────────
+# Constants 
 CONVERSATIONS_DIR = "./conversations"
 HISTORY_LENGTH = 5
 MIN_TIME_BETWEEN_REQUESTS = datetime.timedelta(seconds=1)
 
 Path(CONVERSATIONS_DIR).mkdir(exist_ok=True)
 
-# ── Conversation helpers ───────────────────────────────────────────────────────
+#  Conversation helpers 
 
 def get_thread_id():
     if "thread_id" not in st.session_state:
@@ -98,7 +98,7 @@ def create_new_conversation():
     st.rerun()
 
 
-# ── Suggestions ────────────────────────────────────────────────────────────────
+#  Suggestions 
 
 SUGGESTIONS = {
     "⚖️ What is tenancy law in Lagos?": "Explain tenancy law in Lagos, Nigeria.",
@@ -109,7 +109,7 @@ SUGGESTIONS = {
     "📜 Rights of Nigerian Citizens": "What are my rights as a Nigerian Citizen?",
 }
 
-# ── RAG system (cached) ────────────────────────────────────────────────────────
+# RAG system (cached) 
 
 @st.cache_resource
 def load_rag_system():
@@ -126,7 +126,7 @@ def get_response(question, chat_history):
     return rag_chain.stream({"question": question, "chat_history": history_str})
 
 
-# ── UI ─────────────────────────────────────────────────────────────────────────
+# UI 
 
 st.title("⚖️ Smart Legal Assistant")
 st.caption("Ask questions about Nigerian law, tenancy law, and the Constitution.")

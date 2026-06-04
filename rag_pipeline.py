@@ -18,7 +18,7 @@ from operator import itemgetter
 import os
 import shutil
 
-# ── Configuration ─────────────────────────────────────────────────────────────
+#  Configuration 
 DB_PATH = "./local_chroma_db"
 MODEL = "llama3"
 EMBEDDING_MODEL = "BAAI/bge-small-en"
@@ -40,7 +40,7 @@ Answer concisely and accurately based on the context provided.
 Use markdown for formatting, provide examples if relevant, and be clear.
 """
 
-# ── Shared utilities ───────────────────────────────────────────────────────────
+# Shared utilities
 
 def format_docs(docs):
     """Join retrieved document chunks into a single context string."""
@@ -57,8 +57,7 @@ def get_llm(temperature: float = 0.7):
     return ChatOllama(model=MODEL, temperature=temperature)
 
 
-# ── Vector store ───────────────────────────────────────────────────────────────
-
+# Vector store 
 def build_vector_store(embeddings, force_rebuild: bool = False):
     """
     Load the persisted ChromaDB if it exists, otherwise build it from PDFs.
@@ -109,7 +108,7 @@ def get_retriever(vector_store):
     return vector_store.as_retriever(search_kwargs={"k": RETRIEVER_K})
 
 
-# ── RAG chain ─────────────────────────────────────────────────────────────────
+# RAG chain 
 
 def build_rag_chain(llm, retriever):
     """
@@ -166,7 +165,7 @@ Answer:
     return rag_chain
 
 
-# ── Top-level setup ────────────────────────────────────────────────────────────
+# Top-level setup 
 
 def setup_rag_system(force_rebuild: bool = False):
     """
