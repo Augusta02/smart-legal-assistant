@@ -1,0 +1,77 @@
+[
+  {
+    "question": "What is the minimum notice period a landlord must give a monthly tenant before recovery of premises in Lagos?",
+    "ground_truth": "A landlord must give a monthly tenant at least one month's notice before recovering the premises.",
+    "source": "tenancy_law"
+  },
+  {
+    "question": "Under what conditions can a landlord lawfully recover possession of rented premises in Lagos?",
+    "ground_truth": "A landlord may recover possession only through a court order after serving the appropriate statutory notice. Self-help evictions such as changing locks or removing the tenant's belongings without a court order are prohibited.",
+    "source": "tenancy_law"
+  },
+  {
+    "question": "What notice is required before a yearly tenant can be evicted in Lagos?",
+    "ground_truth": "A yearly tenant is entitled to at least six months' notice before the landlord can recover possession.",
+    "source": "tenancy_law"
+  },
+  {
+    "question": "Can a landlord increase rent without giving the tenant prior notice in Lagos?",
+    "ground_truth": "No. Under the Lagos Tenancy Law, a landlord must give the tenant advance notice before any rent increase can take effect. The notice period depends on the type of tenancy.",
+    "source": "tenancy_law"
+  },
+  {
+    "question": "What is the penalty for a landlord who forcibly evicts a tenant without a court order in Lagos?",
+    "ground_truth": "A landlord who unlawfully evicts a tenant without a court order is liable to criminal and civil penalties under the Lagos Tenancy Law, including fines and liability to pay damages to the tenant.",
+    "source": "tenancy_law"
+  },
+  {
+    "question": "What repairs is a landlord obligated to carry out under Nigerian tenancy law?",
+    "ground_truth": "A landlord is obligated to keep the premises in a good state of repair and to carry out structural and major repairs. The tenant is generally responsible for minor day-to-day repairs unless otherwise agreed in the tenancy agreement.",
+    "source": "tenancy_law"
+  },
+  {
+    "question": "Is a verbal tenancy agreement legally valid in Lagos?",
+    "ground_truth": "Yes, a verbal tenancy agreement is legally valid in Lagos. However, written agreements are strongly recommended because they are easier to enforce and provide clearer evidence of the terms agreed upon.",
+    "source": "tenancy_law"
+  },
+  {
+    "question": "What fundamental rights are guaranteed to every Nigerian citizen under Chapter IV of the Constitution?",
+    "ground_truth": "Chapter IV of the Nigerian Constitution guarantees fundamental rights including the right to life, right to dignity of the human person, right to personal liberty, right to fair hearing, right to private and family life, right to freedom of thought, conscience and religion, right to freedom of expression and the press, right to peaceful assembly and association, right to freedom of movement, right to freedom from discrimination, and right to acquire and own immovable property anywhere in Nigeria.",
+    "source": "constitution"
+  },
+  {
+    "question": "Under the Nigerian Constitution, under what circumstances can a person be deprived of their right to life?",
+    "ground_truth": "Under Section 33 of the Nigerian Constitution, no person shall be deprived intentionally of his life, except in execution of a sentence of a court in respect of a criminal offence of which he has been found guilty.",
+    "source": "constitution"
+  },
+  {
+    "question": "What does the Nigerian Constitution say about the right to fair hearing?",
+    "ground_truth": "Section 36 of the Constitution guarantees that every person is entitled to a fair hearing within a reasonable time by a court or tribunal. The person is presumed innocent until proved guilty, has the right to be informed promptly of the offence in a language they understand, and has the right to legal representation.",
+    "source": "constitution"
+  },
+  {
+    "question": "What is the security of tenure provision for tenants in Lagos?",
+    "ground_truth": "Under the Lagos Tenancy Law, a tenant has security of tenure and cannot be evicted except through due process of law. A landlord must obtain a court order for recovery of premises after serving the appropriate statutory notice.",
+    "source": "tenancy_law"
+  },
+  {
+    "question": "Can a tenant sub-let rented premises in Lagos without the landlord's consent?",
+    "ground_truth": "Generally, a tenant cannot sub-let or assign the rented premises without the landlord's written consent unless the tenancy agreement expressly permits it.",
+    "source": "tenancy_law"
+  },
+  {
+    "question": "What does the Nigerian Constitution say about freedom from discrimination?",
+    "ground_truth": "Section 42 of the Constitution provides that no citizen of Nigeria shall be subjected to any disability or deprivation merely by reason of the circumstances of his birth, his sex, religion, status, ethnic or linguistic association or ties.",
+    "source": "constitution"
+  },
+  {
+    "question": "What are the constitutional rights of an arrested person in Nigeria?",
+    "ground_truth": "Under Section 35 of the Constitution, an arrested person must be informed promptly of the reason for their arrest, must be brought before a court within 24 to 48 hours, has the right to remain silent, has the right to legal counsel of their own choice, and must be released or charged within a reasonable time.",
+    "source": "constitution"
+  },
+  {
+    "question": "What is the role of the Rent Tribunal under the Lagos Tenancy Law?",
+    "ground_truth": "The Rent Tribunal hears and determines disputes between landlords and tenants relating to rent, recovery of possession, and other matters arising under the Lagos Tenancy Law. It provides a more accessible and faster forum for resolving tenancy disputes than the regular courts.",
+    "source": "tenancy_law"
+  }
+]

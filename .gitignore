@@ -1,4 +1,29 @@
-venv
-conversations
-.venv
-local_chroma_db
+# Virtual environments
+venv/
+.venv/
+
+# ChromaDB vector store (rebuild with ingest.py)
+local_chroma_db/
+
+# Conversation history (user data, not source code)
+conversations/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Eval outputs (generated, not source)
+eval/results.csv
+eval/*.csv
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Sensitive / large data files
+*.pdf

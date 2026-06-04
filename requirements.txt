@@ -9,4 +9,6 @@ chromadb
 pypdf
 sentence-transformers
 streamlit
- 
+huggingface_hub
+ragas
+datasets
