@@ -33,7 +33,7 @@ from pathlib import Path
 # replacement (llm_factory) only supports cloud providers (OpenAI, etc.).
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="ragas")
 
-# ── RAGAS imports ──────────────────────────────────────────────────────────────
+# RAGAS imports 
 from ragas import evaluate
 from ragas.metrics.collections import (
     faithfulness,
@@ -45,12 +45,12 @@ from ragas.llms import LangchainLLMWrapper
 from ragas.embeddings import LangchainEmbeddingsWrapper
 from datasets import Dataset
 
-# ── Project imports ────────────────────────────────────────────────────────────
+# Project imports 
 # Add parent directory so we can import rag_pipeline
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from rag_pipeline import setup_rag_system, get_embeddings, get_llm
 
-# ── Config ─────────────────────────────────────────────────────────────────────
+#  Config
 QA_PATH = Path(__file__).parent / "qa_pairs.json"
 METRICS = [faithfulness, answer_relevancy, context_precision, context_recall]
 
@@ -91,7 +91,8 @@ def run_pipeline_on_questions(qa_pairs: list[dict], rag_chain, retriever) -> lis
         results.append({
             "question": question,
             "answer": answer,
-            "contexts": contexts,        # list of strings — retrieved chunks
+            # list of strings — retrieved chunks
+            "contexts": contexts,        
             "ground_truth": ground_truth,
         })
 
@@ -127,7 +128,8 @@ def print_results(scores: dict) -> None:
         except (TypeError, ValueError):
             numeric = None
 
-        if numeric is not None and numeric == numeric:  # filters out NaN (NaN != NaN)
+        # filters out NaN (NaN != NaN)
+        if numeric is not None and numeric == numeric:  
             filled = int(numeric * 20)
             bar = "█" * filled + "░" * (20 - filled)
             print(f"  {label}: {numeric:.3f}  [{bar}]")
@@ -155,11 +157,11 @@ def main():
     parser.add_argument("--rebuild", action="store_true", help="Force-rebuild the vector DB before evaluating")
     args = parser.parse_args()
 
-    # ── Load pipeline ──────────────────────────────────────────────────────────
+    # Load pipeline
     print("Loading RAG system...")
     rag_chain, _, retriever = setup_rag_system(force_rebuild=args.rebuild)
 
-    # ── Wrap LLM and embeddings for RAGAS ──────────────────────────────────────
+    # Wrap LLM and embeddings for RAGAS
     # RAGAS needs to call the LLM and embeddings itself to score faithfulness etc.
     # We wrap our existing Ollama LLM and HuggingFace embeddings so RAGAS can use them.
     ragas_llm = LangchainLLMWrapper(get_llm(temperature=0))
@@ -169,18 +171,18 @@ def main():
         metric.llm = ragas_llm
         metric.embeddings = ragas_embeddings
 
-    # ── Run pipeline on all questions ──────────────────────────────────────────
+    # Run pipeline on all questions 
     print(f"\nLoading {QA_PATH.name}...")
     qa_pairs = load_qa_pairs(QA_PATH)
     print(f"Running pipeline on {len(qa_pairs)} questions...\n")
     results = run_pipeline_on_questions(qa_pairs, rag_chain, retriever)
 
-    # ── Build dataset and evaluate ─────────────────────────────────────────────
+    # Build dataset and evaluate 
     print("\nRunning RAGAS evaluation (this may take a few minutes)...")
     dataset = build_ragas_dataset(results)
     eval_result = evaluate(dataset=dataset, metrics=METRICS)
 
-    # ── Display results ────────────────────────────────────────────────────────
+    # Display results 
     scores = eval_result.to_pandas()[
         ["faithfulness", "answer_relevancy", "context_precision", "context_recall"]
     ].mean().to_dict()

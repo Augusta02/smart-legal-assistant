@@ -164,8 +164,7 @@ Answer:
 
     return rag_chain
 
-
-# Top-level setup 
+ 
 
 def setup_rag_system(force_rebuild: bool = False):
     """
