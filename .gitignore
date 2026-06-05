@@ -16,6 +16,7 @@ __pycache__/
 # Eval outputs (generated, not source)
 eval/results.csv
 eval/*.csv
+eval/pipeline_cache.json
 
 # OS files
 .DS_Store
