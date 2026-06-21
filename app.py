@@ -23,6 +23,31 @@ MIN_TIME_BETWEEN_REQUESTS = datetime.timedelta(seconds=1)
 Path(CONVERSATIONS_DIR).mkdir(exist_ok=True)
 st.set_page_config(page_title="Legal Research Assistant")
 
+# Lock sidebar width and hide resize handle
+st.markdown("""
+<style>
+[data-testid="stSidebar"] {
+    min-width: 260px !important;
+    max-width: 260px !important;
+}
+[data-testid="stSidebarResizeHandle"] {
+    display: none !important;
+}
+/* Make delete button small and aligned */
+div[data-testid="stHorizontalBlock"] div[data-testid="stColumn"]:last-child button {
+    padding: 0.15rem 0.3rem !important;
+    font-size: 0.75rem !important;
+    height: 2rem !important;
+    min-height: 2rem !important;
+}
+div[data-testid="stHorizontalBlock"] div[data-testid="stColumn"]:first-child button {
+    height: 2rem !important;
+    min-height: 2rem !important;
+    text-align: left !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 #  Conversation helpers 
 
 def get_thread_id():
@@ -180,10 +205,9 @@ with st.sidebar:
             if len(title) > 28:
                 title = title[:28].rsplit(" ", 1)[0] + "…"
 
-            col_title, col_del = st.columns([5, 1])
+            col_title, col_del = st.columns([6, 1])
             with col_title:
-                label = f"**{title}**" if is_active else title
-                if st.button(label, use_container_width=True, key=f"load_{conv['thread_id']}"):
+                if st.button(f"**{title}**", use_container_width=True, key=f"load_{conv['thread_id']}"):
                     st.session_state.thread_id = conv["thread_id"]
                     st.session_state.messages = load_conversation(conv["thread_id"])
                     st.rerun()
