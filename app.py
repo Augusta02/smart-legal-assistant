@@ -67,6 +67,26 @@ st.markdown("""
     background: transparent !important;
     color: #555 !important;
 }
+
+/* Delete button — plain text, no box */
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child .stButton > button,
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child .stButton > button[kind="secondary"] {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    color: #bbb !important;
+    font-size: 11px !important;
+    padding: 0 2px !important;
+    height: auto !important;
+    min-height: unset !important;
+    line-height: 1.5 !important;
+    justify-content: center !important;
+}
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child .stButton > button:hover {
+    background: transparent !important;
+    color: #555 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
