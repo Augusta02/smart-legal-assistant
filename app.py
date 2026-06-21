@@ -39,13 +39,13 @@ st.markdown("""
     margin-bottom: 2px !important;
 }
 
-/* Title buttons: no box, left-aligned */
+/* Title buttons: no box, left-aligned, theme-aware color */
 [data-testid="stSidebar"] .stButton > button[kind="secondary"] {
     justify-content: flex-start !important;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    color: #1a1a1a !important;
+    color: inherit !important;
     font-weight: 700 !important;
     font-size: 13px !important;
     padding: 2px 4px !important;
@@ -62,20 +62,26 @@ st.markdown("""
     width: 100% !important;
     margin: 0 !important;
     font-weight: 700 !important;
+    color: inherit !important;
 }
 [data-testid="stSidebar"] .stButton > button[kind="secondary"]:hover {
     background: transparent !important;
-    color: #555 !important;
+    opacity: 0.7 !important;
 }
 
-/* Delete button — plain text, no box */
-[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child .stButton > button,
-[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child .stButton > button[kind="secondary"] {
+/* Delete button — no box at all, plain × */
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] > *:last-child button,
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] > *:last-child button[kind="secondary"] {
     background: transparent !important;
+    background-color: transparent !important;
     border: none !important;
-    box-shadow: none !important;
+    border-width: 0 !important;
+    border-style: none !important;
+    border-color: transparent !important;
     outline: none !important;
-    color: #bbb !important;
+    box-shadow: none !important;
+    color: inherit !important;
+    opacity: 0.45 !important;
     font-size: 11px !important;
     padding: 0 2px !important;
     height: auto !important;
@@ -83,9 +89,12 @@ st.markdown("""
     line-height: 1.5 !important;
     justify-content: center !important;
 }
-[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child .stButton > button:hover {
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] > *:last-child button:hover {
     background: transparent !important;
-    color: #555 !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-width: 0 !important;
+    opacity: 0.8 !important;
 }
 </style>
 """, unsafe_allow_html=True)
