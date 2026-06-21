@@ -17,12 +17,13 @@ from operator import itemgetter
 from pathlib import Path
 import os
 import shutil
+import time
 
 # Paths and constants
 _ROOT = Path(__file__).resolve().parent
 DB_PATH = str(_ROOT / "local_chroma_db")
 MODEL = "llama3.2:3b"
-GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_MODEL = "llama-3.1-8b-instant" 
 EMBEDDING_MODEL = "BAAI/bge-small-en"
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 150
@@ -60,7 +61,6 @@ ADVANCE RENT (Section 4):
 DISPUTES: Go to the Rent Tribunal — faster and cheaper than regular court.
 
 HOW TO ANSWER:
-
 1. Answer every question asked separately. Three questions = three clear answers.
 2. Do not show maths when amounts are mentioned but make sure calculations are done correctly. For example, if rent was ₦1.5M and increased to ₦4M, that's a ₦2.5M increase — which is a 167% increase. So you would say: "Your rent was increased by ₦2.5M, which is a 167% increase." Not just "Your rent was increased by ₦2.5M."
    e.g. ₦1.5M to ₦4M → ₦2.5M more → (2.5 ÷ 1.5) × 100 = 167% increase.
@@ -241,15 +241,25 @@ def build_rag_chain(llm, retriever):
     )
     _judge_chain = _judge_prompt | llm | StrOutputParser()
 
-    # Full chain 
+    def _invoke_with_retry(chain, inputs: dict, retries: int = 3) -> str:
+        """Invoke a chain with exponential backoff on rate-limit errors."""
+        for attempt in range(retries):
+            try:
+                return chain.invoke(inputs)
+            except Exception as e:
+                if attempt == retries - 1:
+                    raise
+                wait = 2 ** attempt  
+
+    # Full chain
     def _best_of_n(inputs: dict) -> str:
         question     = inputs["question"]
         chat_history = inputs.get("chat_history", "")
         rewritten    = _maybe_rewrite(inputs)
 
-        # Generate 3 query angles
-        raw     = _query_chain.invoke({"question": rewritten})
-        queries = [q.strip() for q in raw.strip().splitlines() if q.strip()][:3]
+        # Generate 2 query angles (reduced from 3 to stay)
+        raw     = _invoke_with_retry(_query_chain, {"question": rewritten})
+        queries = [q.strip() for q in raw.strip().splitlines() if q.strip()][:2]
         if not queries:
             queries = [rewritten]
         # Deduplicate while preserving order; always include the rewritten original
@@ -258,14 +268,14 @@ def build_rag_chain(llm, retriever):
             if q not in seen:
                 seen.add(q)
                 all_queries.append(q)
-        all_queries = all_queries[:3]
+        all_queries = all_queries[:2]
 
         # Generate one answer per query angle
         candidates = []
         for q in all_queries:
             docs    = retriever.invoke(q)
             context = format_docs(docs)
-            answer  = _answer_chain.invoke({
+            answer  = _invoke_with_retry(_answer_chain, {
                 "context":      context,
                 "question":     question,
                 "chat_history": chat_history,
@@ -280,7 +290,7 @@ def build_rag_chain(llm, retriever):
         candidates_text = "\n\n---\n\n".join(
             f"Answer {i + 1}:\n{a}" for i, a in enumerate(candidates)
         )
-        return _judge_chain.invoke({
+        return _invoke_with_retry(_judge_chain, {
             "question":   question,
             "candidates": candidates_text,
         })

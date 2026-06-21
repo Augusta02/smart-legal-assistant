@@ -160,23 +160,30 @@ if "thread_id" not in st.session_state:
 
 # Sidebar
 with st.sidebar:
-    st.header("Conversations")
-    if st.button("New", use_container_width=True):
+    st.markdown("### Conversations")
+    if st.button("New conversation", use_container_width=True, type="primary"):
         create_new_conversation()
-    st.divider()
 
     conversations = list_conversations()
     if conversations:
-        st.subheader("Recent")
+        st.markdown("---")
+        st.caption("RECENT")
         for conv in conversations[:10]:
-            col_title, col_del = st.columns([4, 1])
+            is_active = conv["thread_id"] == st.session_state.get("thread_id")
+            title = conv["title"].strip()
+            # Truncate cleanly at word boundary
+            if len(title) > 28:
+                title = title[:28].rsplit(" ", 1)[0] + "…"
+
+            col_title, col_del = st.columns([5, 1])
             with col_title:
-                if st.button(conv["title"][:30], use_container_width=True, key=f"load_{conv['thread_id']}"):
+                label = f"**{title}**" if is_active else title
+                if st.button(label, use_container_width=True, key=f"load_{conv['thread_id']}"):
                     st.session_state.thread_id = conv["thread_id"]
                     st.session_state.messages = load_conversation(conv["thread_id"])
                     st.rerun()
             with col_del:
-                if st.button("🗑️", key=f"del_{conv['thread_id']}"):
+                if st.button("✕", key=f"del_{conv['thread_id']}", help="Delete"):
                     delete_conversation(conv["thread_id"])
                     st.rerun()
 
@@ -212,8 +219,9 @@ if user_message:
     with st.chat_message("assistant"):
         with st.spinner("Legal Assistant Thinking..."):
             history = [
-                f"{m['role'].capitalize()}: {m['content']}"
+                f"User: {m['content']}"
                 for m in st.session_state.messages[-(HISTORY_LENGTH * 2):]
+                if m["role"] == "user"
             ]
             response = st.write_stream(get_response(user_message, history))
 
