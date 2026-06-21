@@ -32,61 +32,40 @@ st.markdown("""
 }
 [data-testid="stSidebarResizeHandle"] { display: none !important; }
 
-/* Row: vertically centre title + delete */
+/* Row alignment */
 [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] {
     align-items: center !important;
     gap: 4px !important;
     margin-bottom: 2px !important;
 }
 
-/* Title button — plain text, no box */
-[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:first-child {
-    padding: 0 !important;
-}
-[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:first-child button {
-    text-align: left !important;
-    font-weight: 700 !important;
-    font-size: 13px !important;
+/* Title buttons: no box, left-aligned */
+[data-testid="stSidebar"] .stButton > button[kind="secondary"] {
+    justify-content: flex-start !important;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
     color: #1a1a1a !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    padding: 2px 4px !important;
     height: auto !important;
     min-height: unset !important;
-    padding: 2px 0 !important;
-    margin: 0 !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    line-height: 1.4 !important;
+    line-height: 1.5 !important;
+}
+[data-testid="stSidebar"] .stButton > button[kind="secondary"] > div {
+    justify-content: flex-start !important;
     width: 100% !important;
-    display: block !important;
 }
-[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:first-child button p {
+[data-testid="stSidebar"] .stButton > button[kind="secondary"] p {
     text-align: left !important;
+    width: 100% !important;
     margin: 0 !important;
+    font-weight: 700 !important;
 }
-[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:first-child button:hover {
+[data-testid="stSidebar"] .stButton > button[kind="secondary"]:hover {
+    background: transparent !important;
     color: #555 !important;
-    background: transparent !important;
-    text-decoration: underline !important;
-}
-
-/* Delete button — same height as text */
-[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child button {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    color: #bbb !important;
-    font-size: 11px !important;
-    height: auto !important;
-    min-height: unset !important;
-    width: auto !important;
-    padding: 0 2px !important;
-    line-height: 1.4 !important;
-}
-[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child button:hover {
-    color: #555 !important;
-    background: transparent !important;
 }
 </style>
 """, unsafe_allow_html=True)
