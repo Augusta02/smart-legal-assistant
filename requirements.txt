@@ -12,3 +12,4 @@ streamlit
 huggingface_hub
 ragas
 datasets
+openai

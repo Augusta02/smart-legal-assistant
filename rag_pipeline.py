@@ -12,32 +12,62 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from langchain_core.output_parsers import StrOutputParser
 from operator import itemgetter
+from pathlib import Path
 import os
 import shutil
 
-#  Configuration 
-DB_PATH = "./local_chroma_db"
-MODEL = "llama3"
+# Paths and constants
+_ROOT = Path(__file__).resolve().parent
+DB_PATH = str(_ROOT / "local_chroma_db")
+MODEL = "llama3.2:3b"
 EMBEDDING_MODEL = "BAAI/bge-small-en"
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 200
-RETRIEVER_K = 3
+CHUNK_SIZE = 800
+CHUNK_OVERLAP = 150
+RETRIEVER_K = 10
 
 PDF_SOURCES = [
-    "./data/Tenancy Law 2011.pdf",
-    "./data/Constitution-of-the-Federal-Republic-of-Nigeria-2023.pdf",
+    str(_ROOT / "data" / "Tenancy Law 2011.pdf"),
+    str(_ROOT / "data" / "Constitution-of-the-Federal-Republic-of-Nigeria-2023.pdf"),
 ]
 
 SYSTEM_INSTRUCTIONS = """
-You are a helpful legal assistant for answering questions about Nigerian law,
-specifically tenancy law and the Constitution of the Federal Republic of Nigeria.
-Use the following retrieved context to answer the question. If you don't know
-the answer, say you don't know.
-Answer concisely and accurately based on the context provided.
-Use markdown for formatting, provide examples if relevant, and be clear.
+You are a friendly legal guide helping everyday Nigerians understand their rights.
+Speak plainly — like a knowledgeable friend, not a lawyer reading from a textbook.
+
+KEY LEGAL FACTS from Lagos Tenancy Law 2011 — for more context:
+
+NOTICE TO QUIT (Section 13) — notice required to END a tenancy:
+- Yearly tenant → 6 months notice minimum 
+- Monthly tenant → 1 month notice minimum 
+- Quarterly tenant → 3 months notice 
+- Half-yearly tenant → 3 months notice 
+If a landlord's notice to quit is shorter than these, it is INVALID. Say so directly.
+
+RENT INCREASES (Section 37):
+- The law does NOT set a specific advance notice period just for a rent increase.
+- BUT if the landlord's notice of increase is also a notice to quit (leave if you don't accept),
+  then Section 13 notice periods apply — 6 months for a yearly tenant, 1 month for monthly.
+- A tenant can apply to the Rent Tribunal/Court to declare any increase UNREASONABLE (Section 37).
+- There is NO cap on how much rent can be increased — but the increase can be challenged.
+
+ADVANCE RENT (Section 4):
+- Landlord cannot demand more than 1 year advance from a yearly tenant, or 6 months from a monthly tenant.
+- Section 4 is about advance rent limits ONLY — not about notice or increase amounts.
+
+DISPUTES: Go to the Rent Tribunal — faster and cheaper than regular court.
+
+HOW TO ANSWER:
+1. Open with what this means for the person — never a section number first.
+2. Answer every question asked separately. Three questions = three clear answers.
+3. Show maths when amounts are mentioned:
+   e.g. ₦1.5M to ₦4M → ₦2.5M more → (2.5 ÷ 1.5) × 100 = 167% increase.
+4. Be direct. If notice was too short say: "Your landlord did not give you enough notice."
+5. End with what the person should do next.
+6. Use retrieved context only for supporting section numbers — not to override the facts above.
+7. If something is genuinely unclear, say so. Do not guess.
 """
 
 # Shared utilities
@@ -104,65 +134,133 @@ def build_vector_store(embeddings, force_rebuild: bool = False):
 
 
 def get_retriever(vector_store):
-    """Return a retriever from the vector store."""
+    """Return a base retriever from the vector store."""
     return vector_store.as_retriever(search_kwargs={"k": RETRIEVER_K})
 
 
-# RAG chain 
+# RAG chain
 
 def build_rag_chain(llm, retriever):
     """
-    Build and return the full LCEL RAG chain.
+    Best-of-N agentic RAG chain.
 
-    The chain:
-      1. Rewrites the user question into a standalone query (using chat history).
-      2. Retrieves relevant chunks from the vector store.
-      3. Passes context + history + question to the answer prompt.
-      4. Returns a streamed string response.
+    For each question the chain:
+      1. Optionally rewrites the question into a standalone query (using chat history).
+      2. Generates 3 different query angles from the rewritten question.
+      3. Retrieves context and generates a full answer for each angle independently.
+      4. A judge prompt picks the best answer among the 3 candidates.
+      5. Returns the winning answer.
 
-    Args:
-        llm: ChatOllama instance.
-        retriever: Chroma retriever instance.
-
-    Returns:
-        A runnable LCEL chain.
+    Why best-of-N instead of merged context:
+      Merging all retrieved chunks into one prompt dilutes the context and the
+      model has to reconcile competing passages. Generating separate answers per
+      angle and then judging produces a more focused, accurate response — each
+      candidate uses only the context most relevant to its query framing.
     """
-    # Step 1 — question rewriter
+
+    # question rewriter 
     contextualize_prompt = ChatPromptTemplate.from_messages([
         ("system",
          """Given the chat history and the latest user question,
-rewrite the question so it becomes a standalone question.
-Do NOT answer the question. Only rewrite it if necessary."""),
+            rewrite it into a standalone question.
+            Do NOT answer it. Only rewrite if necessary."""),
         ("human", "Chat history:\n{chat_history}\n\nQuestion:\n{question}"),
     ])
+    _rewrite_chain = contextualize_prompt | llm | StrOutputParser()
 
-    question_rewrite_chain = contextualize_prompt | llm | StrOutputParser()
+    def _maybe_rewrite(inputs: dict) -> str:
+        if not inputs.get("chat_history", "").strip():
+            return inputs["question"]
+        return _rewrite_chain.invoke(inputs)
 
-    # Step 2 — answer prompt
-    rag_prompt = ChatPromptTemplate.from_template(f"""
-{SYSTEM_INSTRUCTIONS}
+    #  query angle generator 
+    _query_gen_prompt = ChatPromptTemplate.from_template(
+        """You are a Nigerian legal research assistant. Given a question, generate
+        3 different search queries covering different angles needed to fully answer it.
+        Each query should target a distinct aspect (e.g. rights, procedures, penalties).
 
-Context: {{context}}
-History: {{chat_history}}
-Question: {{question}}
+        Return ONLY 3 queries, one per line, no numbering or labels.
 
-Answer:
-""")
-
-    # Step 3 — full chain
-    rag_chain = (
-        RunnablePassthrough.assign(rewritten_question=question_rewrite_chain)
-        | {
-            "context": itemgetter("rewritten_question") | retriever | format_docs,
-            "question": itemgetter("question"),
-            "chat_history": itemgetter("chat_history"),
-        }
-        | rag_prompt
-        | llm
-        | StrOutputParser()
+        Question: {question}
+        Queries:"""
     )
+    _query_chain = _query_gen_prompt | llm | StrOutputParser()
 
-    return rag_chain
+    #  answer prompt 
+    _answer_prompt = ChatPromptTemplate.from_template(
+        f"""{SYSTEM_INSTRUCTIONS}
+
+        Context: {{context}}
+        History: {{chat_history}}
+        Question: {{question}}
+
+        Answer:"""
+    )
+    _answer_chain = _answer_prompt | llm | StrOutputParser()
+
+    #  judge prompt 
+    _judge_prompt = ChatPromptTemplate.from_template(
+        """You are evaluating three candidate answers to a legal question about Nigerian law.
+            Choose the single best answer based on:
+            1. Legal accuracy — correctly identifies the applicable law and what it actually says
+            2. Completeness — addresses every part of the question asked
+            3. Clarity — explains things plainly without unnecessary jargon
+            4. Practical guidance — tells the person what to actually do next
+
+            Question: {question}
+
+            {candidates}
+
+            Return ONLY the full text of the best answer. Do not add any prefix like "Answer 2" or
+            "The best answer is". Just return the answer itself."""
+    )
+    _judge_chain = _judge_prompt | llm | StrOutputParser()
+
+    # Full chain 
+    def _best_of_n(inputs: dict) -> str:
+        question     = inputs["question"]
+        chat_history = inputs.get("chat_history", "")
+        rewritten    = _maybe_rewrite(inputs)
+
+        # Generate 3 query angles
+        raw     = _query_chain.invoke({"question": rewritten})
+        queries = [q.strip() for q in raw.strip().splitlines() if q.strip()][:3]
+        if not queries:
+            queries = [rewritten]
+        # Deduplicate while preserving order; always include the rewritten original
+        seen, all_queries = set(), []
+        for q in [rewritten] + queries:
+            if q not in seen:
+                seen.add(q)
+                all_queries.append(q)
+        all_queries = all_queries[:3]
+
+        # Generate one answer per query angle
+        candidates = []
+        for q in all_queries:
+            docs    = retriever.invoke(q)
+            context = format_docs(docs)
+            answer  = _answer_chain.invoke({
+                "context":      context,
+                "question":     question,
+                "chat_history": chat_history,
+            })
+            candidates.append(answer)
+
+        # If only one candidate (generation failed), return it directly
+        if len(candidates) == 1:
+            return candidates[0]
+
+        # Judge picks the best
+        candidates_text = "\n\n---\n\n".join(
+            f"Answer {i + 1}:\n{a}" for i, a in enumerate(candidates)
+        )
+        return _judge_chain.invoke({
+            "question":   question,
+            "candidates": candidates_text,
+        })
+
+    return RunnableLambda(_best_of_n)
 
  
 

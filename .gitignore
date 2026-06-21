@@ -14,7 +14,6 @@ __pycache__/
 *.pyo
 
 # Eval outputs (generated, not source)
-eval/results.csv
 eval/*.csv
 eval/pipeline_cache.json
 
