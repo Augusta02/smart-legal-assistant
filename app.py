@@ -40,6 +40,9 @@ st.markdown("""
 }
 
 /* Title button — plain text, no box */
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:first-child {
+    padding: 0 !important;
+}
 [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:first-child button {
     text-align: left !important;
     font-weight: 700 !important;
@@ -51,11 +54,16 @@ st.markdown("""
     height: auto !important;
     min-height: unset !important;
     padding: 2px 0 !important;
+    margin: 0 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     line-height: 1.4 !important;
-    display: flex !important;
-    justify-content: flex-start !important;
+    width: 100% !important;
+    display: block !important;
+}
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:first-child button p {
+    text-align: left !important;
+    margin: 0 !important;
 }
 [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:first-child button:hover {
     color: #555 !important;
