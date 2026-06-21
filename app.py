@@ -54,6 +54,8 @@ st.markdown("""
     white-space: nowrap !important;
     overflow: hidden !important;
     line-height: 1.4 !important;
+    display: flex !important;
+    justify-content: flex-start !important;
 }
 [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:first-child button:hover {
     color: #555 !important;
