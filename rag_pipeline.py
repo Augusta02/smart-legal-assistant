@@ -23,7 +23,7 @@ import time
 _ROOT = Path(__file__).resolve().parent
 DB_PATH = str(_ROOT / "local_chroma_db")
 MODEL = "llama3.2:3b"
-GROQ_MODEL = "llama-3.1-8b-instant" 
+GROQ_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 EMBEDDING_MODEL = "BAAI/bge-small-en"
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 150
@@ -249,7 +249,8 @@ def build_rag_chain(llm, retriever):
             except Exception as e:
                 if attempt == retries - 1:
                     raise
-                wait = 2 ** attempt  
+                wait = 2 ** attempt  # 1s, 2s, 4s
+                time.sleep(wait)
 
     # Full chain
     def _best_of_n(inputs: dict) -> str:

@@ -121,9 +121,14 @@ rag_chain, llm, retriever = load_rag_system()
 
 def get_response(question, chat_history):
     history_str = "\n".join(chat_history[-(HISTORY_LENGTH * 2):])
-    # Best-of-N chain generates 3 candidates then judges — returns full string.
+    # Best-of-N chain generates candidates then judges — returns full string.
     # We fake-stream it word by word so the UI doesn't stall on a blank screen.
-    result = rag_chain.invoke({"question": question, "chat_history": history_str})
+    try:
+        result = rag_chain.invoke({"question": question, "chat_history": history_str})
+    except Exception as e:
+        error_msg = f"**Error from LLM provider:** {type(e).__name__}: {e}"
+        yield error_msg
+        return
     for word in result.split(" "):
         yield word + " "
 
