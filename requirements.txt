@@ -1,15 +1,13 @@
-langchain
 langchain-community
 langchain-core
 langchain-text-splitters
 langchain-huggingface
 langchain-chroma
 langchain-ollama
+langchain-groq
 chromadb
 pypdf
 sentence-transformers
 streamlit
 huggingface_hub
-ragas
-datasets
-openai
+nltk

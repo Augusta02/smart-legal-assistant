@@ -10,7 +10,6 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
-from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from langchain_core.output_parsers import StrOutputParser
@@ -23,6 +22,7 @@ import shutil
 _ROOT = Path(__file__).resolve().parent
 DB_PATH = str(_ROOT / "local_chroma_db")
 MODEL = "llama3.2:3b"
+GROQ_MODEL = "llama-3.3-70b-versatile"
 EMBEDDING_MODEL = "BAAI/bge-small-en"
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 150
@@ -83,8 +83,26 @@ def get_embeddings():
 
 
 def get_llm(temperature: float = 0.7):
-    """Return the shared ChatOllama LLM instance."""
+    """
+    Return the LLM instance.
+    - If GROQ_API_KEY is set (Streamlit Cloud / any cloud deployment) → use Groq.
+    - Otherwise → use local Ollama.
+    """
+    groq_key = os.environ.get("GROQ_API_KEY") or _get_streamlit_secret("GROQ_API_KEY")
+    if groq_key:
+        from langchain_groq import ChatGroq
+        return ChatGroq(model=GROQ_MODEL, temperature=temperature, api_key=groq_key)
+    from langchain_ollama import ChatOllama
     return ChatOllama(model=MODEL, temperature=temperature)
+
+
+def _get_streamlit_secret(key: str) -> str | None:
+    """Read a key from st.secrets without hard-importing streamlit."""
+    try:
+        import streamlit as st
+        return st.secrets.get(key)
+    except Exception:
+        return None
 
 
 # Vector store 
