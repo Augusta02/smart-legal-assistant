@@ -27,7 +27,7 @@ GROQ_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 EMBEDDING_MODEL = "BAAI/bge-small-en"
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 150
-RETRIEVER_K = 10
+RETRIEVER_K = 30
 
 PDF_SOURCES = [
     str(_ROOT / "data" / "Tenancy Law 2011.pdf"),
@@ -59,6 +59,14 @@ ADVANCE RENT (Section 4):
 - Section 4 is about advance rent limits ONLY — not about notice or increase amounts.
 
 DISPUTES: Go to the Rent Tribunal — faster and cheaper than regular court.
+
+CORPUS BOUNDARY — CRITICAL:
+Your only source documents are the Lagos Tenancy Law 2011 and the 2023 Nigerian Constitution.
+If asked about any other law (Violence Against Persons Act, Labour Act, Companies Act, Criminal Code, etc.):
+- Say clearly: "I don't have that law in my documents."
+- You may reference what the Constitution says about the topic generally (e.g. right to dignity under Section 34).
+- Do NOT cite specific sections, fines, penalties, or procedures from laws not in your corpus.
+- Do NOT provide information from external resources — you cannot verify them.
 
 HOW TO ANSWER:
 1. Answer every question asked separately. Three questions = three clear answers.
@@ -159,8 +167,41 @@ def build_vector_store(embeddings, force_rebuild: bool = False):
 
 
 def get_retriever(vector_store):
-    """Return a base retriever from the vector store."""
-    return vector_store.as_retriever(search_kwargs={"k": RETRIEVER_K})
+    """
+    Return an ensemble retriever combining BM25 (keyword) + ChromaDB (semantic).
+
+    Why hybrid:
+      Pure semantic search misses exact legal terms because embeddings generalise meaning. BM25 catches
+      exact-match terms; the ensemble re-ranks results from both, improving recall
+      on statute-specific language without sacrificing semantic coverage.
+    """
+    semantic_retriever = vector_store.as_retriever(search_kwargs={"k": RETRIEVER_K})
+
+    try:
+        from langchain_community.retrievers import BM25Retriever
+        from langchain.retrievers import EnsembleRetriever
+
+        # Re-chunk the source PDFs for BM25 — no embeddings needed, completes in seconds
+        pages = []
+        for path in PDF_SOURCES:
+            if os.path.exists(path):
+                pages += PyPDFLoader(path).load()
+
+        if pages:
+            splitter = RecursiveCharacterTextSplitter(
+                chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP
+            )
+            docs = splitter.split_documents(pages)
+            bm25_retriever = BM25Retriever.from_documents(docs, k=RETRIEVER_K)
+
+            return EnsembleRetriever(
+                retrievers=[semantic_retriever, bm25_retriever],
+                weights=[0.6, 0.4], 
+            )
+    except ImportError:
+        pass  
+
+    return semantic_retriever
 
 
 # RAG chain

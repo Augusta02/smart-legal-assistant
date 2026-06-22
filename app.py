@@ -109,28 +109,44 @@ def get_thread_id():
 
 def save_conversation(thread_id, messages):
     thread_path = Path(CONVERSATIONS_DIR) / f"{thread_id}.json"
+
+    # (prevents overwriting a real title with "Untitled" after a conversation is loaded)
+    title = st.session_state.get(f"title_{thread_id}")
+    if not title and thread_path.exists():
+        try:
+            with open(thread_path, "r") as f:
+                title = json.load(f).get("title")
+        except Exception:
+            pass
+    title = title or "Untitled Conversation"
+
     data = {
         "thread_id": thread_id,
         "created_at": st.session_state.get(f"created_{thread_id}", datetime.datetime.now().isoformat()),
         "updated_at": datetime.datetime.now().isoformat(),
         "messages": messages,
-        "title": st.session_state.get(f"title_{thread_id}", "Untitled Conversation"),
+        "title": title,
     }
     with open(thread_path, "w") as f:
         json.dump(data, f, indent=2)
 
 
 def generate_title(first_user_message, llm):
-    try:
-        title_prompt = ChatPromptTemplate.from_template(
-            "Given this user question, generate a very short (max 6 words) title: {question}\n\nTitle:"
-        )
-        title_chain = title_prompt | llm | StrOutputParser()
-        title = title_chain.invoke({"question": first_user_message})
-        return title.strip()[:60]
-    except Exception as e:
-        st.warning(f"Title generation failed: {e}")
-        return first_user_message[:60]
+    """Generate a short conversation title with retry on rate-limit errors."""
+    title_prompt = ChatPromptTemplate.from_template(
+        "Generate a very short title (max 5 words, no quotes) for a conversation that starts with this question: {question}\n\nTitle:"
+    )
+    title_chain = title_prompt | llm | StrOutputParser()
+    for attempt in range(3):
+        try:
+            title = title_chain.invoke({"question": first_user_message})
+            return title.strip().strip('"').strip("'")[:60]
+        except Exception:
+            if attempt < 2:
+                time.sleep(2 ** attempt)
+    # Fallback: first 6 words of the user message
+    words = first_user_message.split()
+    return " ".join(words[:6]) + ("…" if len(words) > 6 else "")
 
 
 def load_conversation(thread_id):
@@ -138,6 +154,9 @@ def load_conversation(thread_id):
     if thread_path.exists():
         with open(thread_path, "r") as f:
             data = json.load(f)
+        # Restore title to session state so save_conversation doesn't lose it
+        if "title" in data:
+            st.session_state[f"title_{thread_id}"] = data["title"]
         return data.get("messages", [])
     return []
 
@@ -268,6 +287,12 @@ with st.sidebar:
                     st.rerun()
 
 # Input
+# Chat input is always rendered so it never disappears on mobile during reruns
+placeholder = "Ask a question about Nigerian law..." if not st.session_state.messages else "Ask a follow-up..."
+chat_input = st.chat_input(placeholder)
+
+# Show suggestion pills only on empty conversation
+selected_suggestion = None
 if not st.session_state.messages:
     selected_suggestion = st.pills(
         label="Examples",
@@ -275,9 +300,8 @@ if not st.session_state.messages:
         options=SUGGESTIONS.keys(),
         key="selected_suggestion",
     )
-    user_message = SUGGESTIONS[selected_suggestion] if selected_suggestion else st.chat_input("Ask a question about Nigerian law...")
-else:
-    user_message = st.chat_input("Ask a follow-up...")
+
+user_message = chat_input or (SUGGESTIONS.get(selected_suggestion) if selected_suggestion else None)
 
 # Chat history display
 for message in st.session_state.messages:

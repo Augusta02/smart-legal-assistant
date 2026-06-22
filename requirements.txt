@@ -11,3 +11,4 @@ sentence-transformers
 streamlit
 huggingface_hub
 nltk
+rank_bm25

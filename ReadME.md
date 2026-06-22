@@ -60,12 +60,12 @@ Four metrics, all computed without an LLM judge. Evaluation runs against 15 hand
 
 | Metric | Score | Target |
 |---|---|---|
-| Answer Relevancy | 0.911 | >= 0.70 |
-| Context Precision | 0.787 | >= 0.70 |
-| Faithfulness | 0.734 | >= 0.70 |
-| Context Recall | 0.565 | >= 0.70 |
+| Answer Relevancy | 0.931 | >= 0.70 |
+| Context Precision | 0.711 | >= 0.70 |
+| Faithfulness | 0.934 | >= 0.70 |
+| Context Recall | 0.639 | >= 0.70 |
 
-Context Recall is the active improvement target. Hybrid BM25 retrieval and K=30 have been applied; updated scores pending eval rerun.
+Three metrics now exceed target. Context Recall (0.639) remains below 0.70 
 
 **Run evaluation**
 
